@@ -1,33 +1,91 @@
-import * as Dialog from '@radix-ui/react-dialog'
-import { CloseButton, Content, Overlay, TransactionsType, TransactionsTypeButton } from './style'
-import { ArrowCircleDown, ArrowCircleUp, X } from 'phosphor-react'
+import * as Dialog from "@radix-ui/react-dialog";
+import {
+  CloseButton,
+  Content,
+  Overlay,
+  TransactionsType,
+  TransactionsTypeButton,
+} from "./style";
+import { ArrowCircleDown, ArrowCircleUp, X } from "phosphor-react";
+import { z } from "zod";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-export function NewTransactionsModal(){
-  return(
+const newTransactionFormSchema = z.object({
+  description: z.string(),
+  price: z.number(),
+  category: z.string(),
+  type: z.enum(["income", "outcome"]),
+});
+type NewTransactionInputs = z.infer<typeof newTransactionFormSchema>;
+
+export function NewTransactionsModal() {
+  const {
+    control,
+    register,
+    handleSubmit,
+  } = useForm<NewTransactionInputs>({
+    resolver: zodResolver(newTransactionFormSchema),
+  });
+  
+  async function handleCreateNewTransaction(data: NewTransactionInputs) {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    console.log(data);
+  }
+
+  return (
     <Dialog.Portal>
-      <Overlay/>
-        <Content>
-          <Dialog.Title>Nova Transação</Dialog.Title>
-          <CloseButton>
-            <X size={24}/>
-          </CloseButton>
-          <form action="">
-            <input type="text" placeholder='Descrição' required />
-            <input type="number" placeholder='Preço' required/>
-            <input type="text" placeholder='Categoria' required/>
-            <TransactionsType>
-              <TransactionsTypeButton value='income' variant='income'>
-                <ArrowCircleUp  size={24}/>
-                Entrada
-              </TransactionsTypeButton>
-              <TransactionsTypeButton value="outcome"variant='outcome'>
-                <ArrowCircleDown size={24}/>
-                Saída
-              </TransactionsTypeButton>
-            </TransactionsType>
-            <button type="submit">Cadastrar</button>
-          </form>
-        </Content>
+      <Overlay />
+      <Content aria-describedby="dialog-description">
+        <Dialog.Title>Nova Transação</Dialog.Title>
+        <p id="dialog-description">Preencha os campos abaixo para adicionar uma nova transação.</p>
+        <CloseButton>
+          <X size={24} />
+        </CloseButton>
+        <form onSubmit={handleSubmit(handleCreateNewTransaction)}>
+          <input
+            type="text"
+            placeholder="Descrição"
+            required
+            {...register("description")}
+          />
+          <input
+            type="number"
+            placeholder="Preço"
+            required
+            {...register("price", { valueAsNumber: true })}
+          />
+          <input
+            type="text"
+            placeholder="Categoria"
+            required
+            {...register("category")}
+          />
+
+          <Controller
+            control={control}
+            name="type"
+            render={({ field }) => {
+              return (
+                <TransactionsType onValueChange={field.onChange} value={field.value}>
+                  <TransactionsTypeButton value="income" variant="income">
+                    <ArrowCircleUp size={24} />
+                    Entrada
+                  </TransactionsTypeButton>
+                  <TransactionsTypeButton value="outcome" variant="outcome">
+                    <ArrowCircleDown size={24} />
+                    Saída
+                  </TransactionsTypeButton>
+                </TransactionsType>
+              );
+            }}
+          />
+
+          <button type="submit">
+            Cadastrar
+          </button>
+        </form>
+      </Content>
     </Dialog.Portal>
-  )
+  );
 }
