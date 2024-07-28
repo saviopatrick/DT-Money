@@ -10,6 +10,8 @@ import { ArrowCircleDown, ArrowCircleUp, X } from "phosphor-react";
 import { z } from "zod";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useContext } from "react";
+import { TransactionsContext } from "../../contexts/TransactionsContext";
 
 const newTransactionFormSchema = z.object({
   description: z.string(),
@@ -20,17 +22,26 @@ const newTransactionFormSchema = z.object({
 type NewTransactionInputs = z.infer<typeof newTransactionFormSchema>;
 
 export function NewTransactionsModal() {
-  const {
-    control,
-    register,
-    handleSubmit,
-  } = useForm<NewTransactionInputs>({
+
+  const {createTransaction} = useContext(TransactionsContext)
+
+  const { control, register, handleSubmit, reset } = useForm<NewTransactionInputs>({
     resolver: zodResolver(newTransactionFormSchema),
   });
-  
+
   async function handleCreateNewTransaction(data: NewTransactionInputs) {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    console.log(data);
+
+    const {description, price, category, type} = data
+
+    await createTransaction({
+      description,
+      price,
+      category,
+      type,
+    })
+
+    
+    reset();
   }
 
   return (
@@ -38,7 +49,9 @@ export function NewTransactionsModal() {
       <Overlay />
       <Content aria-describedby="dialog-description">
         <Dialog.Title>Nova Transação</Dialog.Title>
-        <p id="dialog-description">Preencha os campos abaixo para adicionar uma nova transação.</p>
+        <p id="dialog-description">
+          Preencha os campos abaixo para adicionar uma nova transação.
+        </p>
         <CloseButton>
           <X size={24} />
         </CloseButton>
@@ -67,7 +80,9 @@ export function NewTransactionsModal() {
             name="type"
             render={({ field }) => {
               return (
-                <TransactionsType onValueChange={field.onChange} value={field.value}>
+                <TransactionsType
+                  onValueChange={field.onChange}
+                  value={field.value}>
                   <TransactionsTypeButton value="income" variant="income">
                     <ArrowCircleUp size={24} />
                     Entrada
@@ -81,9 +96,7 @@ export function NewTransactionsModal() {
             }}
           />
 
-          <button type="submit">
-            Cadastrar
-          </button>
+          <button type="submit">Cadastrar</button>
         </form>
       </Content>
     </Dialog.Portal>
